@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 def load_word_lists():
-    """Load adjectives and nouns from text files."""
+    """Load adjectives, nouns, and verbs from text files."""
     current_dir = Path(__file__).parent
     
     try:
@@ -31,11 +31,51 @@ def load_word_lists():
             'storm', 'wind', 'fire', 'star', 'moon', 'sun', 'sky', 'ocean'
         ]
     
-    return adjectives, nouns
+    try:
+        with open(current_dir / 'verbs.txt', 'r') as f:
+            verbs = [line.strip() for line in f if line.strip()]
+    except FileNotFoundError:
+        # Fallback verbs if file not found
+        verbs = [
+            'run', 'jump', 'fly', 'soar', 'swim', 'dive', 'climb', 'dance',
+            'sing', 'play', 'laugh', 'smile', 'think', 'dream', 'create'
+        ]
+    
+    return adjectives, nouns, verbs
+
+
+def generate_creative_alias(adjectives, nouns, verbs, domain='gmail.com'):
+    """Generate creative email aliases using all three word lists."""
+    strategies = [
+        # adjective + noun + number
+        lambda: f"{random.choice(adjectives)}{random.choice(nouns)}{random.randint(1, 999)}@{domain}",
+        # verb + noun + number
+        lambda: f"{random.choice(verbs)}{random.choice(nouns)}{random.randint(1, 99)}@{domain}",
+        # adjective + verb + number
+        lambda: f"{random.choice(adjectives)}{random.choice(verbs)}{random.randint(10, 999)}@{domain}",
+        # verb + adjective + noun
+        lambda: f"{random.choice(verbs)}{random.choice(adjectives)}{random.choice(nouns)}@{domain}",
+        # adjective + _ + noun
+        lambda: f"{random.choice(adjectives)}_{random.choice(nouns)}@{domain}",
+        # verb + _ + noun + number
+        lambda: f"{random.choice(verbs)}_{random.choice(nouns)}{random.randint(1, 99)}@{domain}",
+        # adjective + . + verb + number
+        lambda: f"{random.choice(adjectives)}.{random.choice(verbs)}{random.randint(10, 99)}@{domain}",
+        # noun + verb + year
+        lambda: f"{random.choice(nouns)}{random.choice(verbs)}{random.randint(2020, 2025)}@{domain}",
+        # verb + . + adjective + . + noun
+        lambda: f"{random.choice(verbs)}.{random.choice(adjectives)}.{random.choice(nouns)}@{domain}",
+        # creative combinations with numbers
+        lambda: f"{random.choice(verbs)}{random.choice(adjectives)}{random.randint(1, 999)}@{domain}",
+        lambda: f"{random.choice(nouns)}{random.choice(verbs)}{random.randint(1, 99)}@{domain}",
+        lambda: f"{random.choice(adjectives)}{random.choice(nouns)}{random.choice(verbs)}@{domain}",
+    ]
+    
+    return random.choice(strategies)()
 
 
 def generate_random_alias(adjectives, nouns, domain='gmail.com'):
-    """Generate a random email alias using word combinations."""
+    """Generate a random email alias using word combinations (backward compatibility)."""
     strategies = [
         # adjective + noun + number
         lambda: f"{random.choice(adjectives)}{random.choice(nouns)}{random.randint(1, 999)}@{domain}",
@@ -148,21 +188,37 @@ def generate_mixed_aliases(base_email, total_count):
     username, domain = base_email.split('@')
     aliases = []
     
+    # Load word lists for creative aliases
+    adjectives, nouns, verbs = load_word_lists()
+    
     # For Gmail, only plus addressing and dots work as true aliases
-    # For other providers, we'll generate variations
+    # For other providers, we'll generate variations + creative aliases
     is_gmail = domain.lower() in ['gmail.com', 'googlemail.com']
     
     if is_gmail:
-        # Gmail supports dots and plus addressing
+        # Gmail supports dots, plus addressing, and creative aliases
         strategies = [
-            ('gmail_dots', 0.5),   # 50% chance - dots in username
-            ('plus', 0.5),         # 50% chance - plus addressing
+            ('gmail_dots', 0.3),   # 30% chance - dots in username
+            ('plus', 0.4),         # 40% chance - plus addressing
+            ('creative', 0.3),     # 30% chance - creative aliases
         ]
     else:
-        # Other providers only support plus addressing as true aliases
+        # Other providers: plus addressing works, creative aliases as alternatives
         strategies = [
-            ('plus', 1.0),         # 100% chance - only plus addressing works
+            ('plus', 0.6),         # 60% chance - plus addressing (most likely to work)
+            ('creative', 0.4),     # 40% chance - creative alternatives
         ]
+    
+    # Generate enhanced plus words using our word lists
+    enhanced_plus_words = [
+        # Traditional plus words
+        'shopping', 'newsletter', 'social', 'work', 'personal', 'updates', 'notifications',
+        'promo', 'info', 'contact', 'register', 'signup', 'temp', 'test', 'backup',
+        # Enhanced with adjectives and verbs
+        *random.sample(adjectives, min(20, len(adjectives))),
+        *random.sample(verbs, min(15, len(verbs))),
+        *random.sample(nouns, min(10, len(nouns)))
+    ]
     
     # Generate aliases
     generated_count = 0
@@ -193,10 +249,17 @@ def generate_mixed_aliases(base_email, total_count):
                 generated_count += 1
         
         elif strategy_type == 'plus':
-            # Generate a single plus alias
-            plus_aliases = generate_plus_aliases(base_email, 1)
+            # Generate enhanced plus alias
+            plus_aliases = generate_plus_aliases(base_email, 1, enhanced_plus_words)
             if plus_aliases and plus_aliases[0] not in aliases:
                 aliases.append(plus_aliases[0])
+                generated_count += 1
+        
+        elif strategy_type == 'creative':
+            # Generate creative alias
+            creative_alias = generate_creative_alias(adjectives, nouns, verbs, domain)
+            if creative_alias and creative_alias not in aliases:
+                aliases.append(creative_alias)
                 generated_count += 1
     
     return aliases
