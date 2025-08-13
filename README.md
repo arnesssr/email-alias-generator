@@ -12,6 +12,14 @@ A simple, interactive tool for generating email aliases automatically. Just ente
 
 ## Installation
 
+### Option 1: Download Executable (Recommended for Users)
+
+1. Download the latest `EmailAliasGenerator.exe` from the [Releases](../../releases) page
+2. Double-click to run - no Python installation needed!
+3. Optionally, use the included `installer.bat` for system-wide installation
+
+### Option 2: Run from Source (For Developers)
+
 1. Clone or download this repository
 2. Install the required dependency:
    ```bash
@@ -96,6 +104,28 @@ Would you like to save these aliases to a file? [y/N]:
 You can customize the word lists by editing:
 - `adjectives.txt`: Add your own adjectives for random aliases
 - `nouns.txt`: Add your own nouns for random aliases
+
+## Building Executable
+
+To build your own executable:
+
+1. Install development dependencies:
+   ```bash
+   pip install -r requirements-dev.txt
+   ```
+
+2. Run the build script:
+   ```bash
+   python build_exe.py
+   ```
+
+3. Find your executable in the `dist/` folder
+
+The build script will:
+- Install PyInstaller if needed
+- Create a single executable file (~8MB)
+- Include all necessary data files
+- Generate an optional installer script
 
 ## License
 
