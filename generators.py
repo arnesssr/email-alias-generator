@@ -156,6 +156,7 @@ def generate_plus_aliases(base_email, count, custom_words=None):
     
     username, domain = base_email.split('@')
     aliases = []
+    used_words = set()
     
     # Default words if none provided
     if not custom_words:
@@ -166,16 +167,33 @@ def generate_plus_aliases(base_email, count, custom_words=None):
         ]
     
     for i in range(count):
-        if i < len(custom_words):
-            word = custom_words[i]
-        else:
-            # Generate random combinations after exhausting custom words
-            word = random.choice(custom_words)
-            if random.choice([True, False]):
-                word = f"{word}{random.randint(1, 99)}"
+        attempts = 0
+        max_word_attempts = 50  # Prevent infinite loop
         
-        alias = f"{username}+{word}@{domain}"
-        aliases.append(alias)
+        while attempts < max_word_attempts:
+            attempts += 1
+            
+            if i < len(custom_words):
+                base_word = custom_words[i]
+            else:
+                base_word = random.choice(custom_words)
+            
+            # Create variations to ensure uniqueness
+            if base_word not in used_words:
+                word = base_word
+            elif f"{base_word}2" not in used_words:
+                word = f"{base_word}2"
+            elif f"{base_word}{random.randint(10, 99)}" not in used_words:
+                word = f"{base_word}{random.randint(10, 99)}"
+            else:
+                # Generate completely random combination
+                word = f"{base_word}{random.randint(100, 999)}"
+            
+            if word not in used_words:
+                used_words.add(word)
+                alias = f"{username}+{word}@{domain}"
+                aliases.append(alias)
+                break
     
     return aliases
 
@@ -188,78 +206,86 @@ def generate_mixed_aliases(base_email, total_count):
     username, domain = base_email.split('@')
     aliases = []
     
-    # Load word lists for creative aliases
+    # Load word lists for enhanced plus addressing
     adjectives, nouns, verbs = load_word_lists()
     
-    # For Gmail, only plus addressing and dots work as true aliases
-    # For other providers, we'll generate variations + creative aliases
+    # For Gmail, only plus addressing and dots work as TRUE aliases
+    # For other providers, only plus addressing works as true aliases
     is_gmail = domain.lower() in ['gmail.com', 'googlemail.com']
     
     if is_gmail:
-        # Gmail supports dots, plus addressing, and creative aliases
+        # Gmail supports dots and plus addressing as REAL aliases
         strategies = [
-            ('gmail_dots', 0.3),   # 30% chance - dots in username
-            ('plus', 0.4),         # 40% chance - plus addressing
-            ('creative', 0.3),     # 30% chance - creative aliases
+            ('gmail_dots', 0.4),   # 40% chance - dots in username
+            ('plus', 0.6),         # 60% chance - plus addressing
         ]
     else:
-        # Other providers: plus addressing works, creative aliases as alternatives
+        # Other providers: only plus addressing works as real aliases
         strategies = [
-            ('plus', 0.6),         # 60% chance - plus addressing (most likely to work)
-            ('creative', 0.4),     # 40% chance - creative alternatives
+            ('plus', 1.0),         # 100% chance - only plus addressing works
         ]
     
-    # Generate enhanced plus words using our word lists
+    # Generate enhanced plus words using our word lists (but keep them reasonable)
     enhanced_plus_words = [
-        # Traditional plus words
+        # Traditional plus words (these are practical and recognizable)
         'shopping', 'newsletter', 'social', 'work', 'personal', 'updates', 'notifications',
         'promo', 'info', 'contact', 'register', 'signup', 'temp', 'test', 'backup',
-        # Enhanced with adjectives and verbs
-        *random.sample(adjectives, min(20, len(adjectives))),
-        *random.sample(verbs, min(15, len(verbs))),
-        *random.sample(nouns, min(10, len(nouns)))
+        'bills', 'banking', 'travel', 'deals', 'offers', 'spam', 'junk', 'friends',
+        'family', 'business', 'freelance', 'projects', 'orders', 'receipts',
+        # Add some creative but short words from our lists
+        *random.sample([w for w in adjectives if len(w) <= 8], min(10, len([w for w in adjectives if len(w) <= 8]))),
+        *random.sample([w for w in verbs if len(w) <= 8], min(8, len([w for w in verbs if len(w) <= 8]))),
+        *random.sample([w for w in nouns if len(w) <= 8], min(7, len([w for w in nouns if len(w) <= 8])))
     ]
     
     # Generate aliases
     generated_count = 0
     attempts = 0
-    max_attempts = total_count * 10  # Prevent infinite loops
+    max_attempts = total_count * 20  # Prevent infinite loops
+    
+    # Calculate maximum possible dot variations
+    # For username "tom" we can have: t.om, to.m, t.o.m (all positions between chars)
+    max_dot_variations = 2 ** (len(username) - 1) - 1 if len(username) > 1 else 0
+    # But limit to reasonable number to avoid infinite loops
+    max_dot_variations = min(max_dot_variations, len(username) * 2)
     
     while generated_count < total_count and attempts < max_attempts:
         attempts += 1
         
-        # Choose strategy based on weights
+        # Count current alias types
+        dot_count = sum(1 for alias in aliases if '+' not in alias and alias.split('@')[0] != username)
+        plus_count = sum(1 for alias in aliases if '+' in alias)
+        
+        # Choose strategy based on what we can still generate
+        available_strategies = []
+        
+        if is_gmail and dot_count < max_dot_variations:
+            available_strategies.append(('gmail_dots', 0.4))
+        
+        # Plus addressing has virtually unlimited variations
+        available_strategies.append(('plus', 0.6))
+        
+        if not available_strategies:
+            break  # Can't generate more unique aliases
+        
+        # Choose strategy
         strategy_type = random.choices(
-            [s[0] for s in strategies],
-            weights=[s[1] for s in strategies]
+            [s[0] for s in available_strategies],
+            weights=[s[1] for s in available_strategies]
         )[0]
         
         if strategy_type == 'gmail_dots':
-            # Generate Gmail dot variations
+            # Generate Gmail dot variations (these are REAL aliases)
             alias = generate_gmail_dot_variation(base_email)
-            if alias and alias not in aliases:
+            if alias and alias not in aliases and alias != base_email:
                 aliases.append(alias)
                 generated_count += 1
         
-        elif strategy_type == 'variation':
-            # Generate a single variation
-            variations = generate_variations(base_email, 1)
-            if variations and variations[0] not in aliases:
-                aliases.append(variations[0])
-                generated_count += 1
-        
         elif strategy_type == 'plus':
-            # Generate enhanced plus alias
+            # Generate enhanced plus alias (these are REAL aliases)
             plus_aliases = generate_plus_aliases(base_email, 1, enhanced_plus_words)
             if plus_aliases and plus_aliases[0] not in aliases:
                 aliases.append(plus_aliases[0])
-                generated_count += 1
-        
-        elif strategy_type == 'creative':
-            # Generate creative alias
-            creative_alias = generate_creative_alias(adjectives, nouns, verbs, domain)
-            if creative_alias and creative_alias not in aliases:
-                aliases.append(creative_alias)
                 generated_count += 1
     
     return aliases
