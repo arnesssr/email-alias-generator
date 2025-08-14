@@ -38,12 +38,12 @@ def build_executables():
         "--onefile",
         "--console",
         "--name=EmailAliasGenerator-CLI",
-        "--add-data=adjectives.txt;.",
-        "--add-data=nouns.txt;.",
-        "--add-data=verbs.txt;.",
+        "--add-data=data/adjectives.txt;data",
+        "--add-data=data/nouns.txt;data",
+        "--add-data=data/verbs.txt;data",
         "--distpath=dist",
         "--workpath=build",
-        "alias_generator.py"
+        "src/alias_generator.py"
     ]
     
     try:
@@ -66,12 +66,12 @@ def build_executables():
         "--onefile",
         "--windowed",  # No console window
         "--name=EmailAliasGenerator-GUI",
-        "--add-data=adjectives.txt;.",
-        "--add-data=nouns.txt;.",
-        "--add-data=verbs.txt;.",
+        "--add-data=data/adjectives.txt;data",
+        "--add-data=data/nouns.txt;data",
+        "--add-data=data/verbs.txt;data",
         "--distpath=dist",
         "--workpath=build",
-        "gui_tkinter.py"
+        "gui/gui_tkinter.py"
     ]
     
     try:

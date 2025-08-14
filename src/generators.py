@@ -4,15 +4,21 @@ Email alias generation strategies
 
 import random
 import string
+import sys
 from pathlib import Path
 
 
 def load_word_lists():
     """Load adjectives, nouns, and verbs from text files."""
-    current_dir = Path(__file__).parent
+    current_dir = Path(__file__).parent.parent  # Go up from src/ to root
+    data_dir = current_dir / 'data'
+    
+    # For PyInstaller executables, use the bundled data
+    if hasattr(sys, '_MEIPASS'):
+        data_dir = Path(sys._MEIPASS) / 'data'
     
     try:
-        with open(current_dir / 'adjectives.txt', 'r') as f:
+        with open(data_dir / 'adjectives.txt', 'r') as f:
             adjectives = [line.strip() for line in f if line.strip()]
     except FileNotFoundError:
         # Fallback adjectives if file not found
@@ -22,7 +28,7 @@ def load_word_lists():
         ]
     
     try:
-        with open(current_dir / 'nouns.txt', 'r') as f:
+        with open(data_dir / 'nouns.txt', 'r') as f:
             nouns = [line.strip() for line in f if line.strip()]
     except FileNotFoundError:
         # Fallback nouns if file not found
@@ -32,7 +38,7 @@ def load_word_lists():
         ]
     
     try:
-        with open(current_dir / 'verbs.txt', 'r') as f:
+        with open(data_dir / 'verbs.txt', 'r') as f:
             verbs = [line.strip() for line in f if line.strip()]
     except FileNotFoundError:
         # Fallback verbs if file not found

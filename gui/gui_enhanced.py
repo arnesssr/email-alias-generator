@@ -6,7 +6,7 @@ Enhanced CLI version with better user experience
 import click
 import os
 import sys
-from alias_generator import interactive_mode
+from src.alias_generator import interactive_mode
 
 def enhanced_cli():
     """Enhanced CLI with better presentation."""

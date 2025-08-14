@@ -7,8 +7,12 @@ import tkinter as tk
 from tkinter import ttk, scrolledtext, filedialog, messagebox
 import json
 import csv
+import sys
 from pathlib import Path
-from generators import generate_mixed_aliases
+
+# Add project root to path
+sys.path.append(str(Path(__file__).parent.parent))
+from src.generators import generate_mixed_aliases
 
 class EmailAliasGeneratorGUI:
     def __init__(self, root):
